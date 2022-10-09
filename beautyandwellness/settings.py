@@ -145,6 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+GOOGLE_API_KEY = 'AIzaSyCDCAyEws4JU18RY48LVKmKGHttyHh_7R4'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/

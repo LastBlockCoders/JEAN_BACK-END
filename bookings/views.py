@@ -147,8 +147,6 @@ class BookingRequestStatusUpdateView(generics.GenericAPIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# I have not verified if the start time has already passed
-
 
 class UserBookingRequestView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -176,7 +174,7 @@ class UserBookingRequestDetailView(generics.GenericAPIView):
         return Response(data=serializers.data, status=status.HTTP_200_OK)
 
 
-class BookedSlotsListView(generics.CreateAPIView):
+class BookedSlotsListView(generics.GenericsAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = serializers.BookedSlotListSerializer
 
@@ -186,3 +184,25 @@ class BookedSlotsListView(generics.CreateAPIView):
         serializer = self.serializer_class(instance=bookedslots, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class AppLocationCreateView(generics.GenericAPIView):
+    serializer_class = serializers.AppLocation
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request):
+        data = request.data
+        user = request.user
+        deserializer = self.serializer_class(data=data)
+
+        if deserializer.is_valid():
+            deserializer.save(user=user)
+
+            response = {
+                "message": "location succeesfully saved",
+                "data": deserializer.data,
+            }
+
+            return Response(data=response, status=status.HTTP_202_ACCEPTED)
+
+        return Response(data=deserializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)

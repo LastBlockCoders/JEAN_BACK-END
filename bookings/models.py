@@ -7,6 +7,17 @@ User = get_user_model()
 # Create your models hemok
 
 
+class AppLocation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    place_id = models.CharField(max_lenth=2000, null=True, blank=True)
+    address = models.CharField(max_length=255,  null=True, blank=True)
+    city = models.CharField(max_length=255,  null=True, blank=True)
+    country = models.CharField(max_length=255,  null=True, blank=True)
+    zip_code = models.CharField(max_length=4,  null=True, blank=True)
+    longitude = models.CharField(max_lenth=255,  null=True, blank=True)
+    latitude = models.CharField(max_lenth=255,  null=True, blank=True)
+
+
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULED',
                                             'scheduled'), ('REJECTED', 'rejected'),)
@@ -22,7 +33,7 @@ class Appointment(models.Model):
     approved = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["start_date"]
 
     def schedule(self):
         self.approve = True

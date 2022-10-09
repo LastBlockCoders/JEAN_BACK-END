@@ -1,8 +1,8 @@
 import pytz
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from email.policy import default
 from rest_framework import serializers
-from .models import Appointment, BookedSlot
+from .models import Appointment, BookedSlot, AppLocation
 from django.contrib.auth import get_user_model
 from rest_framework.validators import ValidationError
 User = get_user_model()
@@ -112,3 +112,19 @@ class BookedSlotListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookedSlot
         fields = ["id", "appointment", "appt_date", "start_time", "end_time"]
+
+
+class LocationSerializer(serializers.ModelSerializer):
+    address = serializers.CharField(required=True)
+    city = serializers.CharField(required=True)
+    country = serializers.CharField(required=True)
+    zip_code = serializers.CharField(required=True)
+
+    class Meta:
+        model = AppLocation
+        fields = ['address', 'city', 'country', 'zip_code']
+
+    def _user(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            return request.user
