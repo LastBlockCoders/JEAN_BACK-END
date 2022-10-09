@@ -3,12 +3,12 @@ This is the final prototype back-end system for Jeans Mobile Beauty and Wellness
 
 # Requirements
  - Install Python 3.10
- - Execution policy allows running of scripts
+ - Make sure your Execution policy allows running of unsigned scripts
  
 # Installation
 - Clone the Repo
-- Install requirements file by typing: pip install requirements.txt
+- In your terminal with the project repo open type:  _**env/Scripts/activate**_ 
+- Install requirements file by typing: _**pip install -r requirements.txt**_
 ## Run the server
- - In your terminal with the project repo open type: env/Scripts/activate
- - With the virtual environment activated type: python manage.py runserver
+ - With the virtual environment activated type:_ **python manage.py runserver**_
  - Server will be up and running and you can make requests with the API endpoints!
