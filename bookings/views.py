@@ -16,7 +16,6 @@ User = get_user_model()
 
 class BookingRequestCreateView(generics.GenericAPIView):
     serializer_class = serializers.BookingSerializer
-    queryset = Appointment.objects.all()
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request):
@@ -63,6 +62,7 @@ class BookingRequestDetailView(generics.GenericAPIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, appointment_id):
+        permission_classes = [IsAdminUser]
         data = request.data
         appointment = get_object_or_404(Appointment, pk=appointment_id)
 
@@ -174,7 +174,7 @@ class UserBookingRequestDetailView(generics.GenericAPIView):
         return Response(data=serializers.data, status=status.HTTP_200_OK)
 
 
-class BookedSlotsListView(generics.GenericsAPIView):
+class BookedSlotsListView(generics.GenericAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = serializers.BookedSlotListSerializer
 

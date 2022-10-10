@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookings',
     'accounts',
+    "services",
     "rest_framework",
     "rest_framework.authtoken",
     'drf_multiple_model',

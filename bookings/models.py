@@ -9,18 +9,18 @@ User = get_user_model()
 
 class AppLocation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    place_id = models.CharField(max_lenth=2000, null=True, blank=True)
+    place_id = models.CharField(max_length=2000, null=True, blank=True)
     address = models.CharField(max_length=255,  null=True, blank=True)
     city = models.CharField(max_length=255,  null=True, blank=True)
     country = models.CharField(max_length=255,  null=True, blank=True)
     zip_code = models.CharField(max_length=4,  null=True, blank=True)
-    longitude = models.CharField(max_lenth=255,  null=True, blank=True)
-    latitude = models.CharField(max_lenth=255,  null=True, blank=True)
+    longitude = models.CharField(max_length=255,  null=True, blank=True)
+    latitude = models.CharField(max_length=255,  null=True, blank=True)
 
 
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULED',
-                                            'scheduled'), ('REJECTED', 'rejected'),)
+                                            'scheduled'), ('REJECTED', 'rejected'), ('CANCELLED', 'cancelled'))  # add accepted
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     start_date = models.DateField()
     start_time = models.TimeField()
@@ -31,6 +31,9 @@ class Appointment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     recipients = models.IntegerField()
     approved = models.BooleanField(default=False)
+    # payments status
+    # paid boolenfield
+    # total price
 
     class Meta:
         ordering = ["start_date"]
