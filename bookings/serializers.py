@@ -10,6 +10,7 @@ User = get_user_model()
 
 class BookingSerializer(serializers.ModelSerializer):
     recipients = serializers.IntegerField(write_only=True)
+    service_id = serializers.IntegerField()
     start_date = serializers.DateField(required=True)
     start_time = serializers.TimeField(required=True)
     end_time = serializers.TimeField(required=True)
@@ -19,11 +20,15 @@ class BookingSerializer(serializers.ModelSerializer):
                                            default=serializers.CreateOnlyDefault(datetime.now()))
     updated_at = serializers.DateTimeField(
         read_only=True, default=datetime.now())
+    paid = serializers.BooleanField(read_only=True)
+    total_price = serializers.IntegerField(),
+    payment_status = serializers.CharField(read_only=True, default='UNPAID')
+    payment_method = serializers.CharField(default='EFT/Card')
 
     class Meta:
         model = Appointment
-        fields = ["id", "recipients", "start_date", "start_time", "end_time",
-                  "appt_status", "approved", "created_at", "updated_at"]
+        fields = ["id", "service_id", "recipients", "start_date", "start_time", "end_time",
+                  "appt_status", "approved", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
 
     def _user(self, obj):
         request = self.context.get('request', None)
@@ -33,10 +38,12 @@ class BookingSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         sdate = attrs["start_date"]
         start_time = attrs["start_time"]
+        end_time = attrs["end_time"]
         recipients = attrs["recipients"]
         start_time = datetime.combine(sdate, start_time)
-        # I will get this from the service duration
-        end_time = start_time + timedelta(minutes=10)
+        end_time = datetime.combine(sdate, end_time)
+        # Add 30 min for break in between appointments
+        end_time = end_time + timedelta(minutes=30)
         # The hours an appoitment should not exceed
         over_time = start_time + timedelta(hours=5)
 
@@ -59,14 +66,14 @@ class BookingSerializer(serializers.ModelSerializer):
             for appt in booked_appts:
                 if start_time > datetime.combine(appt.appt_date, appt.start_time) and end_time < datetime.combine(appt.appt_date, appt.end_time):
                     raise ValidationError(
-                        "appointment slot already booked")
+                        "unavailable time slot")
 
                 if start_time < datetime.combine(appt.appt_date, appt.start_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
                     raise ValidationError(
-                        "appointment slot already booked")
+                        "unavailable time slot")
                 if start_time < datetime.combine(appt.appt_date, appt.end_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
                     raise ValidationError(
-                        "appointment slot already booked")
+                        "unavailable time slot")
 
         return super().validate(attrs)
 
@@ -84,24 +91,31 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
     end_time = serializers.TimeField()
-    approved = serializers.BooleanField(read_only=True)
+    approved = serializers.BooleanField()
     appt_status = serializers.CharField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+    paid = serializers.BooleanField()
+    total_price = serializers.IntegerField()
+    payment_status = serializers.CharField()
+    payment_method = serializers.CharField()
 
     class Meta:
         model = Appointment
         fields = ["id", "recipients", "start_date", "start_time", "end_time", "approved",
-                  "appt_status", "created_at", "updated_at"]
+                  "appt_status", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
 
 
 class BookingUpdateStatusSerializer(serializers.ModelSerializer):
     appt_status = serializers.CharField()
     approved = serializers.BooleanField(read_only=True)
+    payment_status = serializers.CharField(read_only=True)
+    payment_method = serializers.CharField(read_only=True)
+    paid = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Appointment
-        fields = ["appt_status", "approved", ]
+        fields = ["appt_status", "approved", "payment_method", "paid", ]
 
 
 class BookedSlotListSerializer(serializers.ModelSerializer):

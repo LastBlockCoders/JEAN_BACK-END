@@ -38,7 +38,6 @@ class BookingRequestCreateView(generics.GenericAPIView):
 
 class BookingRequestListView(generics.GenericAPIView):
     serializer_class = serializers.BookingDetailsSerializer
-    queryset = Appointment.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request: Request):
@@ -51,7 +50,7 @@ class BookingRequestListView(generics.GenericAPIView):
 
 class BookingRequestDetailView(generics.GenericAPIView):
     serializer_class = serializers.BookingDetailsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, appointment_id):
 
@@ -62,7 +61,6 @@ class BookingRequestDetailView(generics.GenericAPIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, appointment_id):
-        permission_classes = [IsAdminUser]
         data = request.data
         appointment = get_object_or_404(Appointment, pk=appointment_id)
 
@@ -95,34 +93,44 @@ class BookingRequestStatusUpdateView(generics.GenericAPIView):
 
         if serializer.is_valid():
             if booked_appts.exists():
-                if serializer.validated_data["appt_status"] == "schedule":
+                if serializer.validated_data["appt_status"] == "accept":
                     for appt in booked_appts:
                         if start_time > datetime.combine(appt.appt_date, appt.start_time) and end_time < datetime.combine(appt.appt_date, appt.end_time):
                             serializer.validated_data["appt_status"] = "rejected"
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled during this time",
+                            response = {"message": "an appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time < datetime.combine(appt.appt_date, appt.start_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
                             serializer.validated_data["appt_status"] = "rejected"
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled during this time",
+                            response = {"message": "an appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time < datetime.combine(appt.appt_date, appt.end_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
-                            serializer.validated_data["appt_status"] = "pending"
+                            serializer.validated_data["appt_status"] = "rejected"
                             serializer.save()
                             response = {"message": "an appointment is already scheduled during this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time == datetime.combine(appt.appt_date, appt.start_time) and end_time == datetime.combine(appt.appt_date, appt.end_time):
-                            serializer.validated_data["appt_status"] = "pending"
+                            serializer.validated_data["appt_status"] = "rejected"
                             serializer.save()
                             response = {"message": "an appointment is already scheduled during this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
 
                         serializer._validated_data["approved"] = True
+
+                        if serializer._validated_data["payment_method"] == "Cash":
+                            serializer._validated_data["paid"] = True
+                            serializer._validated_data["payment_status"] = "PAID"
+                            serializer.save()
+                            bookslot = BookedSlot(
+                                appointment=appointment, start_time=start_time.time(), end_time=end_time.time(), appt_date=appointment.start_date)
+                            bookslot.save()
+                            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
                         serializer.save()
                         bookslot = BookedSlot(
                             appointment=appointment, start_time=start_time.time(), end_time=end_time.time(), appt_date=appointment.start_date)
@@ -134,7 +142,7 @@ class BookingRequestStatusUpdateView(generics.GenericAPIView):
                     serializer.save()
                     return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-            if serializer.validated_data["appt_status"] == 'schedule':
+            if serializer.validated_data["appt_status"] == 'accept':
                 serializer._validated_data["approved"] = True
                 serializer.save()
                 bookslot = BookedSlot(
@@ -148,7 +156,7 @@ class BookingRequestStatusUpdateView(generics.GenericAPIView):
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserBookingRequestView(generics.GenericAPIView):
+class UserBookingRequestsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.BookingDetailsSerializer
 
@@ -165,9 +173,9 @@ class UserBookingRequestDetailView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.BookingDetailsSerializer
 
-    def get(self, request: Request, user_id, order_id):
+    def get(self, request: Request, user_id, appointment_id):
         user = User.objects.get(pk=user_id)
-        appointment = Appointment.objects.all().filter(user=user).get(pk=order_id)
+        appointment = Appointment.objects.all().filter(user=user).get(pk=appointment_id)
 
         serializers = self.serializer_class(instance=appointment)
 

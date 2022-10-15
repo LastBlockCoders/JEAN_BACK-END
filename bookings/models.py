@@ -1,6 +1,7 @@
 from email.policy import default
 from enum import unique
 from django.db import models
+from services.models import Service
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -19,9 +20,10 @@ class AppLocation(models.Model):
 
 
 class Appointment(models.Model):
-    APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULED',
-                                            'scheduled'), ('REJECTED', 'rejected'), ('CANCELLED', 'cancelled'))  # add accepted
+    APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULE',
+                                            'scheduled'), ('REJECT', 'rejected'), ('CANCEL', 'cancelled'), ('ACCEPT', 'accepted'))
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.PROTECT, default=1)
     start_date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
@@ -31,9 +33,10 @@ class Appointment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     recipients = models.IntegerField()
     approved = models.BooleanField(default=False)
-    # payments status
-    # paid boolenfield
-    # total price
+    paid = models.BooleanField(default=False)
+    total_price = models.IntegerField()
+    payment_status = models.CharField(max_length=8, default='UNPAID')
+    payment_method = models.CharField(max_length=25, default='EFT-Card')
 
     class Meta:
         ordering = ["start_date"]
