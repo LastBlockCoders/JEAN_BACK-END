@@ -31,9 +31,9 @@ INSTALLED_APPS = [
     'bookings',
     'accounts',
     "services",
+    "promotions",
     "rest_framework",
     "rest_framework.authtoken",
-    'drf_multiple_model',
     # app-based apps
     "djoser",
     "phonenumbers",
@@ -169,3 +169,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ORIGIN_ALLOW_ALL = True

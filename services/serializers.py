@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from pydoc import describe
 from rest_framework import serializers
 from .models import Service
 from rest_framework.validators import ValidationError

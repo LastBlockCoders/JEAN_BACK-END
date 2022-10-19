@@ -11,4 +11,5 @@ urlpatterns = [
         ActivateUser.as_view({"get": "activation"}),
         name="activation",
     ),
+    path("promotions/", include('promotions.urls'),)
 ]

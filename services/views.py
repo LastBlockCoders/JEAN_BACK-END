@@ -1,4 +1,4 @@
-from urllib.request import Request
+
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -26,7 +26,7 @@ class CreateServicesView(generics.GenericAPIView):
                 "message": "Service added successfully.",
                 "data": deserializer.data,
             }
-            return Response(data=response, status=status.HTTP_202_ACCEPTED)
+            return Response(data=response, status=status.HTTP_201_CREATED)
 
         return Response(data=deserializer.errors, status=status.HTTP_200_OK)
 
