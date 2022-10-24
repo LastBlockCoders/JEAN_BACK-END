@@ -51,7 +51,9 @@ class CouponCodeDetailSerializer(serializers.Serializer):
 
 class CouponCodeApplySerializer(serializers.Serializer):
     is_used = serializers.BooleanField()
+    amount = serializers.IntegerField()
+    expiry = serializers.DateField()
 
     class Meta:
         model = Coupon
-        fields = ["is_used"]
+        fields = ["is_used", "amount", "expiry"]

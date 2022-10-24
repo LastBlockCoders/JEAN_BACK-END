@@ -69,7 +69,7 @@ class ApplyCouponView(generics.GenericAPIView):
         data = request.data
         coupon = get_object_or_404(Coupon, pk=coupon_id)
 
-        serializer = self.serializer_class(data=data, instance=appointment)
+        serializer = self.serializer_class(data=data, instance=coupon)
 
         if serializer.is_valid():
             serializer.save()

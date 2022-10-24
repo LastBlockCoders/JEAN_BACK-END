@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework import generics
 from .models import Service
 from services import serializers
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # Create your views here.
 
@@ -14,6 +15,7 @@ from services import serializers
 class CreateServicesView(generics.GenericAPIView):
     serializer_class = serializers.CreateServiceSerializer
     permission_classes = [IsAdminUser]
+    parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request: Request):
         data = request.data
@@ -33,34 +35,28 @@ class CreateServicesView(generics.GenericAPIView):
 
 class ServiceDetailsView(generics.GenericAPIView):
     serializer_class = serializers.ViewServicesSerializer
+    permission_classes = [IsAdminUser]
+    parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request: Request, service_id):
-        data = request.data
+
         service = get_object_or_404(Service, pk=service_id)
 
-        serializer = self.get_serializer_class(instance=service)
+        serializer = self.serializer_class(instance=service)
 
-        serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 class ServiceDetailsUpdateView(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
-    serializer_class = serializers.CreateServiceSerializer
+    serializer_class = serializers.ViewServicesSerializer
+    parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request: Request, service_id):
         data = request.data
         service = get_object_or_404(Service, pk=service_id)
 
-        serializer = self.get_serializer_class(instance=service)
-
-        serializer = self.serializer_class(data=data)
+        serializer = self.serializer_class(instance=service, data=data)
 
         if serializer.is_valid():
             serializer.save()
@@ -72,6 +68,8 @@ class ServiceDetailsUpdateView(generics.GenericAPIView):
 
 class ServiceListView(generics.GenericAPIView):
     serializer_class = serializers.ViewServicesSerializer
+    permission_classes = [IsAdminUser]
+    parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request: Request):
         services = get_list_or_404(Service.objects.all())

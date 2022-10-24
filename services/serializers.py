@@ -1,4 +1,6 @@
+from asyncore import read
 from datetime import datetime, timedelta
+from unicodedata import category
 from rest_framework import serializers
 from .models import Service
 from rest_framework.validators import ValidationError
@@ -6,19 +8,23 @@ from rest_framework.validators import ValidationError
 
 class CreateServiceSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100, required=True)
+    category_id = serializers.CharField()
+    type = serializers.CharField()
     description = serializers.CharField(required=True)
     location_requirements = serializers.CharField()
-    image1 = serializers.ImageField(required=True)
-    image2 = serializers.ImageField()
-    image3 = serializers.ImageField()
+    image1 = serializers.ImageField(required=False)
+    image2 = serializers.ImageField(required=False)
+    image3 = serializers.ImageField(required=False)
     duration = serializers.DurationField(required=True)
     price = serializers.IntegerField(required=True)
     max_recipients = serializers.IntegerField()
+    payment_options = serializers.CharField()
+    status = serializers.CharField()
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'location_requirements', 'image1',
-                  'image2', 'image3', 'duration', 'price', 'max_recipients']
+        fields = ['id', 'name', 'category_id', 'type', 'description', 'location_requirements', 'image1',
+                  'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
     def validate(self, attrs):
         name = attrs["name"]
@@ -51,7 +57,9 @@ class CreateServiceSerializer(serializers.ModelSerializer):
 
 class ViewServicesSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
+    type = serializers.CharField()
     description = serializers.CharField()
+    category = serializers.PrimaryKeyRelatedField(read_only=True)
     location_requirements = serializers.CharField()
     image1 = serializers.ImageField()
     image2 = serializers.ImageField()
@@ -59,11 +67,13 @@ class ViewServicesSerializer(serializers.ModelSerializer):
     duration = serializers.DurationField()
     price = serializers.IntegerField()
     max_recipients = serializers.IntegerField()
+    payment_options = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'location_requirements',
-                  'image1', 'image2', 'image3', 'duration', 'price', 'max_recipients']
+        fields = ['id', 'name', 'type', 'category', 'description', 'location_requirements',
+                  'image1', 'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
 
 class ServicesPriceUpdateSerializers(serializers.ModelSerializer):
