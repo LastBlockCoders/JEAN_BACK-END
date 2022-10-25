@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.permissions import IsAdminUser
 from rest_framework import generics
-from .models import Service
+from .models import Service, Service_Category
 from services import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -35,7 +35,7 @@ class CreateServicesView(generics.GenericAPIView):
 
 class ServiceDetailsView(generics.GenericAPIView):
     serializer_class = serializers.ViewServicesSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = []
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request: Request, service_id):
@@ -68,12 +68,24 @@ class ServiceDetailsUpdateView(generics.GenericAPIView):
 
 class ServiceListView(generics.GenericAPIView):
     serializer_class = serializers.ViewServicesSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = []
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request: Request):
         services = get_list_or_404(Service.objects.all())
 
         serializer = self.serializer_class(instance=services, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class CategoryListView(generics.GenericAPIView):
+    serializer_class = serializers.CategoryListViewSerializers
+    permission_classes = []
+
+    def get(self, request: Request):
+        category = get_list_or_404(Service_Category.objects.all())
+
+        serializer = self.serializer_class(instance=category, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)

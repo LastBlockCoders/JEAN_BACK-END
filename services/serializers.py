@@ -2,7 +2,7 @@ from asyncore import read
 from datetime import datetime, timedelta
 from unicodedata import category
 from rest_framework import serializers
-from .models import Service
+from .models import Service, Service_Category
 from rest_framework.validators import ValidationError
 
 
@@ -82,3 +82,12 @@ class ServicesPriceUpdateSerializers(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = ['price']
+
+
+class CategoryListViewSerializers(serializers.ModelSerializer):
+    name = serializers.CharField()
+    description = serializers.CharField()
+
+    class Meta:
+        model = Service_Category
+        fields = ["name", "description"]
