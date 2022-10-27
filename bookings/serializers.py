@@ -13,12 +13,14 @@ User = get_user_model()
 
 
 class CartBookingStore(serializers.ModelSerializer):
+    service_id = serializers.ReadOnlyField(
+        source='service_id.id')
     recipients = serializers.IntegerField(required=True)
     amount = serializers.IntegerField(required=True)
 
     class Meta:
         model = Booking
-        fields = ["id", "recipients", "amount"]
+        fields = ["id", "service_id", "recipients", "amount"]
 
     def validate(self, attrs):
 
@@ -39,7 +41,8 @@ class CartBookingStore(serializers.ModelSerializer):
 
 
 class DisplayBooking(serializers.ModelSerializer):
-    service_id = serializers.ReadOnlyField(source='service_id.name')
+    service_id = serializers.ReadOnlyField(
+        source='service_id.name')
     recipients = serializers.IntegerField(required=True)
     amount = serializers.IntegerField()
 
