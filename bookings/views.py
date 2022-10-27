@@ -20,12 +20,13 @@ class CartRequestsStore(generics.GenericAPIView):
     permission_classes = []
     parser_classes = (MultiPartParser, FormParser)
 
-    def post(self, request: Request):
+    def post(self, request: Request, service_id):
         data = request.data
-
+        service = get_object_or_404(Service, pk=service_id)
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
+            serializer.validated_data["service_id"] = service
             serializer.save()
 
             return Response(data=serializer.data, status=status.HTTP_200_OK)

@@ -20,7 +20,7 @@ class AppLocation(models.Model):
 
 
 class Booking(models.Model):
-    service_id = models.CharField(max_length=255)
+    service_id = models.ForeignKey(Service, on_delete=models.CASCADE)
     recipients = models.IntegerField()
     amount = models.IntegerField()
 

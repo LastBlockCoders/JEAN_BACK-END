@@ -15,4 +15,4 @@ urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="
                     name="booked-slots"),
                path("location/", views.AppLocationCreateView.as_view(),
                     name="location"),
-               path("cart/", views.CartRequestsStore.as_view(), name="cart-item")]
+               path("cart/<int:service_id>/", views.CartRequestsStore.as_view(), name="cart-item")]

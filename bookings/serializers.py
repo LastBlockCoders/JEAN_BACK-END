@@ -8,19 +8,17 @@ from .models import Appointment, BookedSlot, AppLocation, Booking
 from services.models import Service
 from django.contrib.auth import get_user_model
 from rest_framework.validators import ValidationError
-from services.serializers import ReceiveServiceID
 
 User = get_user_model()
 
 
 class CartBookingStore(serializers.ModelSerializer):
-    service_id = serializers.CharField(required=True)
     recipients = serializers.IntegerField(required=True)
     amount = serializers.IntegerField(required=True)
 
     class Meta:
         model = Booking
-        fields = ["id", "service_id", "recipients", "amount"]
+        fields = ["id", "recipients", "amount"]
 
     def validate(self, attrs):
 
@@ -41,7 +39,7 @@ class CartBookingStore(serializers.ModelSerializer):
 
 
 class DisplayBooking(serializers.ModelSerializer):
-
+    service_id = serializers.ReadOnlyField(source='service_id.name')
     recipients = serializers.IntegerField(required=True)
     amount = serializers.IntegerField()
 
