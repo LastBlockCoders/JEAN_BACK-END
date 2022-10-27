@@ -13,4 +13,6 @@ urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="
                     views.UserBookingRequestDetailView.as_view(), name="account-detail-booking"),
                path("booked-slots/", views.BookedSlotsListView.as_view(),
                     name="booked-slots"),
-               path("location/", views.AppLocationCreateView.as_view(), name="location"), ]
+               path("location/", views.AppLocationCreateView.as_view(),
+                    name="location"),
+               path("cart/", views.CartRequestsStore.as_view(), name="cart-item")]

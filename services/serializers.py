@@ -91,3 +91,11 @@ class CategoryListViewSerializers(serializers.ModelSerializer):
     class Meta:
         model = Service_Category
         fields = ["name", "description"]
+
+
+class ReceiveServiceID(serializers.ModelSerializer):
+    name = serializers.CharField()
+
+    class Meta:
+        model = Service
+        fields = ["name"]

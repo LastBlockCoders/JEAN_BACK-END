@@ -19,11 +19,17 @@ class AppLocation(models.Model):
     latitude = models.CharField(max_length=255,  null=True, blank=True)
 
 
+class Booking(models.Model):
+    service_id = models.CharField(max_length=255)
+    recipients = models.IntegerField()
+    amount = models.IntegerField()
+
+
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULE',
                                             'scheduled'), ('REJECT', 'rejected'), ('CANCEL', 'cancelled'), ('ACCEPT', 'accepted'))
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    service = models.ForeignKey(Service, on_delete=models.PROTECT, default=1)
+    booking = models.ManyToManyField(Booking)
     start_date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
@@ -31,7 +37,6 @@ class Appointment(models.Model):
         max_length=10, choices=APPT_STATUS, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    recipients = models.IntegerField()
     approved = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     total_price = models.IntegerField()

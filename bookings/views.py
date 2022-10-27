@@ -1,8 +1,8 @@
 
+from services.models import Service
 from datetime import datetime
-from tracemalloc import start
-from drf_multiple_model.views import ObjectMultipleModelAPIView
-from django.shortcuts import render, get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
 from .models import Appointment, BookedSlot
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -10,8 +10,27 @@ from rest_framework.request import Request
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from bookings import serializers
 from django.contrib.auth import get_user_model
+from .function import attempt_json_deserialize
 User = get_user_model()
 # Create your views here.
+
+
+class CartRequestsStore(generics.GenericAPIView):
+    serializer_class = serializers.CartBookingStore
+    permission_classes = []
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request: Request):
+        data = request.data
+
+        serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class BookingRequestCreateView(generics.GenericAPIView):
@@ -21,17 +40,17 @@ class BookingRequestCreateView(generics.GenericAPIView):
     def post(self, request: Request):
         data = request.data
         user = request.user
+        booking_data = data.get("booking")
+        booking_data = attempt_json_deserialize(
+            booking_data, expect_type=list)
+
         deserializedData = self.serializer_class(data=data)
 
         if deserializedData.is_valid():
+            deserializedData._validated_data["booking"] = booking_data
             deserializedData.save(user=user)
 
-            response = {
-                "message": "booking request successfully submitted",
-                "data": deserializedData.data,
-            }
-
-            return Response(data=response, status=status.HTTP_202_ACCEPTED)
+            return Response(data=deserializedData.data, status=status.HTTP_202_ACCEPTED)
 
         return Response(data=deserializedData.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -195,22 +214,17 @@ class BookedSlotsListView(generics.GenericAPIView):
 
 
 class AppLocationCreateView(generics.GenericAPIView):
-    serializer_class = serializers.AppLocation
+    serializer_class = serializers.LocationSerializer
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request):
         data = request.data
         user = request.user
-        deserializer = self.serializer_class(data=data)
+        serializer = self.serializer_class(data=data)
 
-        if deserializer.is_valid():
-            deserializer.save(user=user)
+        if serializer.is_valid():
+            serializer.save(user=user)
 
-            response = {
-                "message": "location succeesfully saved",
-                "data": deserializer.data,
-            }
+            return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
 
-            return Response(data=response, status=status.HTTP_202_ACCEPTED)
-
-        return Response(data=deserializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)

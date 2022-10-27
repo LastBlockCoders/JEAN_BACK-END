@@ -1,16 +1,61 @@
+from rest_framework.fields import CurrentUserDefault
+from urllib import request
 import pytz
 from datetime import datetime, timedelta
 from email.policy import default
 from rest_framework import serializers
-from .models import Appointment, BookedSlot, AppLocation
+from .models import Appointment, BookedSlot, AppLocation, Booking
+from services.models import Service
 from django.contrib.auth import get_user_model
 from rest_framework.validators import ValidationError
+from services.serializers import ReceiveServiceID
+
 User = get_user_model()
 
 
+class CartBookingStore(serializers.ModelSerializer):
+    service_id = serializers.CharField(required=True)
+    recipients = serializers.IntegerField(required=True)
+    amount = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Booking
+        fields = ["id", "service_id", "recipients", "amount"]
+
+    def validate(self, attrs):
+
+        recipients = attrs["recipients"]
+
+        if recipients > 10:
+            raise ValidationError("recipients exceeds 10 people")
+
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+
+        cart = super().create(validated_data)
+
+        cart.save()
+
+        return cart
+
+
+class DisplayBooking(serializers.ModelSerializer):
+
+    recipients = serializers.IntegerField(required=True)
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Booking
+        fields = ["id", "service_id", "recipients", "amount"]
+
+
 class BookingSerializer(serializers.ModelSerializer):
-    recipients = serializers.IntegerField(write_only=True)
-    service_id = serializers.IntegerField()
+    user = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all(),
+    )
+    booking = DisplayBooking(many=True, read_only=True)
     start_date = serializers.DateField(required=True)
     start_time = serializers.TimeField(required=True)
     end_time = serializers.TimeField(required=True)
@@ -27,7 +72,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ["id", "service_id", "recipients", "start_date", "start_time", "end_time",
+        fields = ["booking", "user", "start_date", "start_time", "end_time",
                   "appt_status", "approved", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
 
     def _user(self, obj):
@@ -39,7 +84,6 @@ class BookingSerializer(serializers.ModelSerializer):
         sdate = attrs["start_date"]
         start_time = attrs["start_time"]
         end_time = attrs["end_time"]
-        recipients = attrs["recipients"]
         start_time = datetime.combine(sdate, start_time)
         end_time = datetime.combine(sdate, end_time)
         # Add 30 min for break in between appointments
@@ -57,9 +101,6 @@ class BookingSerializer(serializers.ModelSerializer):
 
         elif end_time < start_time or end_time > over_time:
             raise ValidationError("appointment duration is too long")
-
-        if recipients > 10:
-            raise ValidationError("recipients exceed ten people")
 
         booked_appts = BookedSlot.objects.filter(appt_date=sdate)
         if booked_appts.exists():
@@ -79,15 +120,15 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        booking = super().create(validated_data)
+        appointment = super().create(validated_data)
 
-        booking.save()
+        appointment.save()
 
-        return booking
+        return appointment
 
 
 class BookingDetailsSerializer(serializers.ModelSerializer):
-    recipients = serializers.IntegerField()
+    booking = DisplayBooking(many=True, read_only=True)
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
     end_time = serializers.TimeField()
@@ -102,7 +143,7 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ["id", "recipients", "start_date", "start_time", "end_time", "approved",
+        fields = ["id", "booking", "start_date", "start_time", "end_time", "approved",
                   "appt_status", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
 
 

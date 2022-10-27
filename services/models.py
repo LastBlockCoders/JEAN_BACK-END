@@ -32,12 +32,13 @@ class Service(models.Model):
     class Status(models.TextChoices):
         AVAILABLE = "Available"
         UNAVAILABLE = "Unavailable"
+
     category = models.ForeignKey(
         Service_Category, related_name="services", on_delete=models.CASCADE)
     type = models.CharField(
         max_length=10, choices=ServiceType.choices, default=ServiceType.WELLNESS
     )
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     location_requirements = models.TextField(null=True)
     image1 = models.ImageField(upload_to=upload_to, blank=True, null=True)
