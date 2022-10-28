@@ -11,10 +11,12 @@ User = get_user_model()
 class AppLocation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     place_id = models.CharField(max_length=2000, null=True, blank=True)
-    address = models.CharField(max_length=255,  null=True, blank=True)
+    street = models.CharField(max_length=255,  null=True, blank=True)
+    surburb = models.CharField(max_length=255,  null=True, blank=True)
     city = models.CharField(max_length=255,  null=True, blank=True)
-    country = models.CharField(max_length=255,  null=True, blank=True)
     zip_code = models.CharField(max_length=4,  null=True, blank=True)
+    country = models.CharField(
+        max_length=255,  null=True, default="South Africa")
     longitude = models.CharField(max_length=255,  null=True, blank=True)
     latitude = models.CharField(max_length=255,  null=True, blank=True)
 
@@ -28,7 +30,7 @@ class Booking(models.Model):
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULE',
                                             'scheduled'), ('REJECT', 'rejected'), ('CANCEL', 'cancelled'), ('ACCEPT', 'accepted'))
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     booking = models.ManyToManyField(Booking)
     start_date = models.DateField()
     start_time = models.TimeField()
@@ -42,6 +44,7 @@ class Appointment(models.Model):
     total_price = models.IntegerField()
     payment_status = models.CharField(max_length=8, default='UNPAID')
     payment_method = models.CharField(max_length=25, default='EFT-Card')
+    location = models.ForeignKey(AppLocation, on_delete=models.PROTECT)
 
     class Meta:
         ordering = ["start_date"]

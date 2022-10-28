@@ -12,6 +12,18 @@ from rest_framework.validators import ValidationError
 User = get_user_model()
 
 
+class ViewLocationSerializer(serializers.ModelSerializer):
+    street = serializers.CharField()
+    surburb = serializers.CharField()
+    city = serializers.CharField()
+    zip_code = serializers.CharField()
+    country = serializers.CharField()
+
+    class Meta:
+        model = AppLocation
+        fields = ['street', 'city', 'surburb', 'zip_code', 'country']
+
+
 class CartBookingStore(serializers.ModelSerializer):
     service_id = serializers.ReadOnlyField(
         source='service_id.id')
@@ -52,10 +64,6 @@ class DisplayBooking(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        default=serializers.CurrentUserDefault(),
-        queryset=User.objects.all(),
-    )
     booking = DisplayBooking(many=True, read_only=True)
     start_date = serializers.DateField(required=True)
     start_time = serializers.TimeField(required=True)
@@ -73,7 +81,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ["booking", "user", "start_date", "start_time", "end_time",
+        fields = ["booking", "start_date", "start_time", "end_time",
                   "appt_status", "approved", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
 
     def _user(self, obj):
@@ -130,6 +138,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
 class BookingDetailsSerializer(serializers.ModelSerializer):
     booking = DisplayBooking(many=True, read_only=True)
+    user = serializers.ReadOnlyField(source='user.username')
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
     end_time = serializers.TimeField()
@@ -141,11 +150,12 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
     total_price = serializers.IntegerField()
     payment_status = serializers.CharField()
     payment_method = serializers.CharField()
+    location = ViewLocationSerializer(read_only=True)
 
     class Meta:
         model = Appointment
-        fields = ["id", "booking", "start_date", "start_time", "end_time", "approved",
-                  "appt_status", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
+        fields = ["id", "booking", "user", "start_date", "start_time", "end_time", "approved",
+                  "appt_status", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method", "location"]
 
 
 class BookingUpdateStatusSerializer(serializers.ModelSerializer):
@@ -157,7 +167,18 @@ class BookingUpdateStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ["appt_status", "approved", "payment_method", "paid", ]
+        fields = ["appt_status", "approved",
+                  "payment_method", "paid", "payment_status"]
+
+
+class BookingReschedule(serializers.ModelSerializer):
+    start_date = serializers.DateField(required=True)
+    start_time = serializers.TimeField(required=True)
+    end_time = serializers.TimeField(required=True)
+
+    class Meta:
+        model = Appointment
+        fields = ["start_date", "start_time", "end_time"]
 
 
 class BookedSlotListSerializer(serializers.ModelSerializer):
@@ -170,17 +191,21 @@ class BookedSlotListSerializer(serializers.ModelSerializer):
         fields = ["id", "appointment", "appt_date", "start_time", "end_time"]
 
 
+class BookedDateView(serializers.ModelSerializer):
+    start_time = serializers.TimeField()
+    end_time = serializers.TimeField()
+
+    class Meta:
+        model = BookedSlot
+        fields = ["start_time", "end_time"]
+
+
 class LocationSerializer(serializers.ModelSerializer):
-    address = serializers.CharField(required=True)
+    street = serializers.CharField(required=True)
+    surburb = serializers.CharField()
     city = serializers.CharField(required=True)
-    country = serializers.CharField(required=True)
     zip_code = serializers.CharField(required=True)
 
     class Meta:
         model = AppLocation
-        fields = ['address', 'city', 'country', 'zip_code']
-
-    def _user(self, obj):
-        request = self.context.get('request', None)
-        if request:
-            return request.user
+        fields = ['street', 'city', 'surburb', 'zip_code']
