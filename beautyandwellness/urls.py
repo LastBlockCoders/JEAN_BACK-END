@@ -4,6 +4,7 @@ from django.urls import path, include
 from accounts.views import ActivateUser
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path('appointment/', include("bookings.urls")
          ), path("auth/", include("djoser.urls")), path('auth/', include('djoser.urls.jwt')), path("services/", include('services.urls')),
     path(
@@ -11,4 +12,5 @@ urlpatterns = [
         ActivateUser.as_view({"get": "activation"}),
         name="activation",
     ),
+    path("promotions/", include('promotions.urls'),)
 ]
