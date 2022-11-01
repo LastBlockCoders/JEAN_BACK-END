@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path("latest/", views.GetLatestJoinedUser.as_view(), name="new-users"),
-    path("monthly/", views.UsersMonthly.as_view(), name='monthly-users')]
+    path("monthly/", views.UsersMonthly.as_view(), name='monthly-users'),
+    path("all/", views.UserList.as_view(), name='all-clients'), ]

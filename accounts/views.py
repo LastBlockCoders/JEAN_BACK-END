@@ -74,3 +74,16 @@ class UsersMonthly(generics.GenericAPIView):
         dict = {"new": current_month_users, "old": last_month_users}
 
         return Response(data=dict, status=status.HTTP_200_OK)
+
+
+class UserList(generics.GenericAPIView):
+    serializer_class = serializers.UserDetails
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+
+        users = User.objects.all()
+
+        serializer = self.serializer_class(instance=users, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

@@ -402,11 +402,11 @@ class IncomeMonth(generics.GenericAPIView):
         # set to pending now due to testing
         income = Appointment.objects.exclude(
             created_at__gte=datetime.today()).filter(
-            created_at__gte=date, appt_status='pending').aggregate(Sum('total_price'))
+            created_at__gte=date, appt_status='scheduled').aggregate(Sum('total_price'))
         # set to accept for now due to testing
         income_last = Appointment.objects.exclude(
             created_at__gte=date).filter(
-            created_at__gte=last_month_date, appt_status='accept').aggregate(Sum('total_price'))
+            created_at__gte=last_month_date, appt_status='scheduled').aggregate(Sum('total_price'))
 
         earnings = [income, income_last]
         return Response(data=earnings, status=status.HTTP_200_OK)
@@ -430,13 +430,12 @@ class CompleteRequests(generics.GenericAPIView):
         pytz.utc.localize(
             last_month_date)
 
-        # pending for now, it should be scheduled
         appts_this_month = Appointment.objects.exclude(
-            created_at__gte=datetime.today()).filter(appt_status='pending', created_at__gte=date)
+            created_at__gte=datetime.today()).filter(appt_status='scheduled', created_at__gte=date)
 
         appts_last_month = Appointment.objects.exclude(
             created_at__gte=date).filter(
-            created_at__gte=last_month_date, appt_status='accept')
+            created_at__gte=last_month_date, appt_status='scheduled')
 
         this_month = len(appts_this_month)
         last_month = len(appts_last_month)
