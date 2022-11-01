@@ -1,4 +1,6 @@
-
+import pytz
+from django.db.models.functions import TruncMonth
+from django.db.models import Count, DateField, Sum
 from services.models import Service
 from datetime import datetime
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -9,9 +11,12 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from bookings import serializers
+from .send_mail import send_mail_reply, send_mail_request
+
 from django.contrib.auth import get_user_model
 from .function import attempt_json_deserialize
 User = get_user_model()
+jeans_email = "psnwaynehartley@gmail.com"
 # Create your views here.
 
 
@@ -41,7 +46,7 @@ class BookingRequestCreateView(generics.GenericAPIView):
     def post(self, request: Request):
         data = request.data
         user = request.user
-
+        name = user.username
         location = AppLocation.objects.get(user=user)
 
         booking_data = data.get("booking")
@@ -56,6 +61,8 @@ class BookingRequestCreateView(generics.GenericAPIView):
             deserializedData._validated_data["user"] = user
             deserializedData._validated_data["location"] = location
             deserializedData.save(user=user)
+            send_mail_request(text=name,
+                              subject='Beauty and Wellness Service Appointment', to_emails=[jeans_email, ])
 
             return Response(data=deserializedData.data, status=status.HTTP_202_ACCEPTED)
 
@@ -68,6 +75,18 @@ class BookingRequestListView(generics.GenericAPIView):
 
     def get(self, request: Request):
         appointments = Appointment.objects.all()
+
+        serializer = self.serializer_class(instance=appointments, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class BookingRequestListAdmindasboard(generics.GenericAPIView):
+    serializer_class = serializers.BookingDetailsSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+        appointments = Appointment.objects.all().order_by('-updated_at')[:10]
 
         serializer = self.serializer_class(instance=appointments, many=True)
 
@@ -110,6 +129,9 @@ class BookingRequestReplyView(generics.GenericAPIView):
         data = request.data
         appointment = get_object_or_404(
             Appointment, pk=appointment_id)
+        user = appointment.user
+        client = User.objects.get(pk=user.id)
+        user_email = client.email
         sdate = appointment.start_date
         start_time = datetime.combine(sdate, appointment.start_time)
         end_time = datetime.combine(sdate, appointment.end_time)
@@ -119,54 +141,73 @@ class BookingRequestReplyView(generics.GenericAPIView):
 
         if serializer.is_valid():
             if booked_appts.exists():
-                if serializer.validated_data["appt_status"] == "accept":
+                if serializer.validated_data["appt_status"] == "accepted":
                     for appt in booked_appts:
                         if start_time > datetime.combine(appt.appt_date, appt.start_time) and end_time < datetime.combine(appt.appt_date, appt.end_time):
-                            serializer.validated_data["appt_status"] = "rejected"
+                            serializer.validated_data["appt_status"] = "declined"
+                            send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                            subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled for this time",
+                            response = {"message": "unsuccessful, appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time < datetime.combine(appt.appt_date, appt.start_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
-                            serializer.validated_data["appt_status"] = "rejected"
+                            serializer.validated_data["appt_status"] = "declined"
+                            send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                            subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled for this time",
+                            response = {"message": "unsuccessful, appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time < datetime.combine(appt.appt_date, appt.end_time) and end_time > datetime.combine(appt.appt_date, appt.end_time):
                             serializer.validated_data["appt_status"] = "rejected"
+                            send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                            subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled during this time",
+                            response = {"message": "unsuccessful, appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
                         elif start_time == datetime.combine(appt.appt_date, appt.start_time) and end_time == datetime.combine(appt.appt_date, appt.end_time):
                             serializer.validated_data["appt_status"] = "rejected"
+                            send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                            subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
                             serializer.save()
-                            response = {"message": "an appointment is already scheduled during this time",
+                            response = {"message": "unsuccessful, appointment is already scheduled for this time",
                                         "data": serializer.data}
                             return Response(data=response, status=status.HTTP_200_OK)
 
                         serializer._validated_data["approved"] = True
 
                         if appointment.payment_method == "Cash":
+                            serializer.validated_data["appt_status"] = "scheduled"
                             serializer._validated_data["paid"] = True
                             serializer._validated_data["payment_status"] = "PAID"
                             serializer.save()
                             bookslot = BookedSlot(
                                 appointment=appointment, start_time=start_time.time(), end_time=end_time.time(), appt_date=appointment.start_date)
                             bookslot.save()
-                            return Response(data=serializer.data, status=status.HTTP_200_OK)
+                            send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                            subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
+                            response = {
+                                "message": "successfully accepted", "data": serializer.data}
+                            return Response(data=response, status=status.HTTP_200_OK)
 
                         serializer.save()
                         bookslot = BookedSlot(
                             appointment=appointment, start_time=start_time.time(), end_time=end_time.time(), appt_date=appointment.start_date)
                         bookslot.save()
-
-                        return Response(data=serializer.data, status=status.HTTP_200_OK)
+                        send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                        subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
+                        response = {
+                            "message": "successfully accepted appointment", "data": serializer.data}
+                        return Response(data=response, status=status.HTTP_200_OK)
 
                 elif serializer.validated_data["appt_status"] == "reject":
                     serializer.save()
-                    return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+                    response = {"message": "appointment declined",
+                                "data": serializer.data}
+                    return Response(data=response, status=status.HTTP_200_OK)
 
             if serializer.validated_data["appt_status"] == 'accept':
                 serializer._validated_data["approved"] = True
@@ -174,10 +215,20 @@ class BookingRequestReplyView(generics.GenericAPIView):
                 bookslot = BookedSlot(
                     appointment=appointment, start_time=start_time.time(), end_time=end_time.time(), appt_date=appointment.start_date)
                 bookslot.save()
-                return Response(data=serializer.data, status=status.HTTP_200_OK)
-            elif serializer.validated_data["appt_status"] == "reject":
+                send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
+
+                response = {"message": "successfully accepted",
+                            "data": serializer.data}
+                return Response(data=response, status=status.HTTP_200_OK)
+
+            elif serializer.validated_data["appt_status"] == "declined":
                 serializer.save()
-                return Response(data=serializer.data, status=status.HTTP_200_OK)
+                send_mail_reply(html=serializer.validated_data["appt_status"], text='An update on your appointment request',
+                                subject='Beauty and Wellness Service Appointment', to_emails=[user_email, ])
+                response = {"message": "appointment declined",
+                            "data": serializer.data}
+                return Response(data=response, status=status.HTTP_200_OK)
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -312,3 +363,84 @@ class AppLocationCreateView(generics.GenericAPIView):
             return Response(data=serializer.data, status=status.HTTP_202_ACCEPTED)
 
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class RequestStats(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+        date = datetime.today().date()
+        last_year = date.year - 1
+
+        stats = Appointment.objects.filter(created_at__year__gte=last_year).annotate(month=TruncMonth('created_at', output_field=DateField())).values(
+            'month').annotate(total=Count('id')).order_by()
+
+        for stat in stats:
+            convert_to_month_one = stat["month"]
+            month = convert_to_month_one.month
+            stat["month"] = month
+
+        return Response(data=stats, status=status.HTTP_200_OK)
+
+
+class IncomeMonth(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+        date = datetime.today().date()
+        year = date.year
+        this_month = date.month
+        last_month = this_month - 1
+
+        date = datetime(int(year), int(this_month), 1)
+        pytz.utc.localize(
+            date)
+        last_month_date = datetime(int(year), int(last_month), 1)
+        pytz.utc.localize(
+            last_month_date)
+
+        # set to pending now due to testing
+        income = Appointment.objects.exclude(
+            created_at__gte=datetime.today()).filter(
+            created_at__gte=date, appt_status='pending').aggregate(Sum('total_price'))
+        # set to accept for now due to testing
+        income_last = Appointment.objects.exclude(
+            created_at__gte=date).filter(
+            created_at__gte=last_month_date, appt_status='accept').aggregate(Sum('total_price'))
+
+        earnings = [income, income_last]
+        return Response(data=earnings, status=status.HTTP_200_OK)
+
+
+class CompleteRequests(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+
+        date = datetime.today().date()
+        year = date.year
+        this_month = date.month
+        last_month = this_month - 1
+
+        date = datetime(int(year), int(this_month), 1)
+        pytz.utc.localize(
+            date)
+
+        last_month_date = datetime(int(year), int(last_month), 1)
+        pytz.utc.localize(
+            last_month_date)
+
+        # pending for now, it should be scheduled
+        appts_this_month = Appointment.objects.exclude(
+            created_at__gte=datetime.today()).filter(appt_status='pending', created_at__gte=date)
+
+        appts_last_month = Appointment.objects.exclude(
+            created_at__gte=date).filter(
+            created_at__gte=last_month_date, appt_status='accept')
+
+        this_month = len(appts_this_month)
+        last_month = len(appts_last_month)
+
+        dict = {"new": this_month, "old": last_month}
+
+        return Response(data=dict, status=status.HTTP_200_OK)

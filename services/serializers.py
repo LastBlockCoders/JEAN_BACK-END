@@ -31,6 +31,7 @@ class CreateServiceSerializer(serializers.ModelSerializer):
         description = attrs["description"]
         duration = attrs["duration"]
         price = attrs["price"]
+        max_recipients = attrs["max_recipients"]
 
         if not name:
             raise ValidationError('please provide service name')
@@ -41,8 +42,16 @@ class CreateServiceSerializer(serializers.ModelSerializer):
         if not price:
             raise ValidationError('please provide service price')
 
+        if not max_recipients:
+            raise ValidationError(
+                'please provide maximum number of recipients')
+
         if price < 50:
             raise ValidationError('service price is less than R50')
+
+        if max_recipients > 10:
+            raise ValidationError(
+                'only maximum of 10 recipients is currently allowed')
 
         return super().validate(attrs)
 
@@ -59,7 +68,7 @@ class ViewServicesSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     type = serializers.CharField()
     description = serializers.CharField()
-    category = serializers.PrimaryKeyRelatedField(read_only=True)
+    category = serializers.ReadOnlyField(source='category.name')
     location_requirements = serializers.CharField()
     image1 = serializers.ImageField()
     image2 = serializers.ImageField()
@@ -90,6 +99,15 @@ class CategoryListViewSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Service_Category
+        fields = ["id", "name", "description"]
+
+
+class CategoryCreate(serializers.ModelSerializer):
+    name = serializers.CharField(required=True)
+    description = serializers.CharField(required=True)
+
+    class Meta:
+        model = Service_Category
         fields = ["name", "description"]
 
 
@@ -98,4 +116,10 @@ class ReceiveServiceID(serializers.ModelSerializer):
 
     class Meta:
         model = Service
+        fields = ["name"]
+
+    name = serializers.CharField()
+
+    class Meta:
+        model = Service_Category
         fields = ["name"]

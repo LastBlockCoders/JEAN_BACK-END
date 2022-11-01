@@ -41,3 +41,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
+class UserDetails(serializers.ModelSerializer):
+    email = serializers.CharField()
+    username = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "username"]
