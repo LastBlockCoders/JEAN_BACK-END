@@ -68,7 +68,7 @@ class BookingSerializer(serializers.ModelSerializer):
     start_date = serializers.DateField(required=True)
     start_time = serializers.TimeField(required=True)
     end_time = serializers.TimeField(required=True)
-    appt_status = serializers.HiddenField(default='pending')
+    appt_status = serializers.CharField(read_only=True, default='pending')
     approved = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True,
                                            default=serializers.CreateOnlyDefault(datetime.now()))

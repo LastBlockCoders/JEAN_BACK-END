@@ -5,6 +5,8 @@ urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="
                path("list/", views.BookingRequestListView.as_view(), name="list"),
                path("view/<int:appointment_id>/",
                     views.BookingRequestDetailView.as_view(), name="view"),
+               path("view/",
+                    views.BookingRequestListAdmindasboard.as_view(), name="view-latest"),
                path("update-reply/<int:appointment_id>/",
                     views.BookingRequestReplyView.as_view(), name="reply"),
                path("cancel/<int:appointment_id>/",
@@ -19,4 +21,9 @@ urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="
                     name="booked-slots"),
                path("location/", views.AppLocationCreateView.as_view(),
                     name="location"),
-               path("cart/<int:service_id>/", views.CartRequestsStore.as_view(), name="cart-item")]
+               path("cart/<int:service_id>/",
+                    views.CartRequestsStore.as_view(), name="cart-item"),
+               path("requests-per-month/", views.RequestStats.as_view(),
+                    name='requets-per-month'),
+               path("income-for-month/", views.IncomeMonth.as_view(), name='income'),
+               path("completed-requests/", views.CompleteRequests.as_view(), name='requets-completed'), ]

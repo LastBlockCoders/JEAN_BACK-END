@@ -29,7 +29,7 @@ class Booking(models.Model):
 
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULE',
-                                            'scheduled'), ('REJECT', 'rejected'), ('CANCEL', 'cancelled'), ('ACCEPT', 'accepted'))
+                                            'scheduled'), ('DECLINE', 'declined'), ('CANCELLED', 'cancelled'), ('ACCEPT', 'accepted'))
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     booking = models.ManyToManyField(Booking)
     start_date = models.DateField()

@@ -30,7 +30,7 @@ class CreateServicesView(generics.GenericAPIView):
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
 
-        return Response(data=deserializer.errors, status=status.HTTP_200_OK)
+        return Response(data=deserializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class ServiceDetailsView(generics.GenericAPIView):
@@ -63,7 +63,7 @@ class ServiceDetailsUpdateView(generics.GenericAPIView):
 
             return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class ServiceListView(generics.GenericAPIView):
@@ -89,3 +89,33 @@ class CategoryListView(generics.GenericAPIView):
         serializer = self.serializer_class(instance=category, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class CreateCategoryView(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = serializers.CategoryCreate
+
+    def post(self, request: Request):
+
+        data = request.data
+
+        serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+
+            serializer.save()
+
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class DeleteServiceView(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request: Request, service_id):
+
+        service = get_object_or_404(Service, pk=service_id)
+
+        service.delete()
+
+        return Response(status=status.HTTP_200_OK)
