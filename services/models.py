@@ -43,7 +43,7 @@ class Service(models.Model):
     image3 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     duration = models.DurationField()
     promo_price = models.IntegerField()
-    featured = models.IntegerField()
+    featured = models.IntegerField(default=0)
     price = models.IntegerField()
     max_recipients = models.IntegerField()
     payment_options = models.CharField(

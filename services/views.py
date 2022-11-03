@@ -188,3 +188,16 @@ class ServiceRequestPerMonth(generics.GenericAPIView):
                 "id": int(last_month_date.month), "total": last}]
 
             return Response(data=dict, status=status.HTTP_200_OK)
+
+
+class FeatureService(generics.GenericAPIView):
+    serializer_class = serializers.ViewServicesSerializer
+    permission_classes = []
+
+    def get(self, request: Request):
+
+        queryset = Service.objects.filter(featured=1)
+
+        serializer = self.serializer_class(instance=queryset, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
