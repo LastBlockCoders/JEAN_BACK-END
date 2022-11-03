@@ -10,7 +10,8 @@ def upload_to(instance, filename):
 
 
 class Service_Category(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
+    image1 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     description = models.TextField()
 
     def __str__(self):
@@ -29,10 +30,6 @@ class Service(models.Model):
         EFTCard = "EFT-Card-Cash"
         CASH = "Cash"
 
-    class Status(models.TextChoices):
-        AVAILABLE = "Available"
-        UNAVAILABLE = "Unavailable"
-
     category = models.ForeignKey(
         Service_Category, related_name="services", on_delete=models.CASCADE)
     type = models.CharField(
@@ -45,12 +42,14 @@ class Service(models.Model):
     image2 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     image3 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     duration = models.DurationField()
+    promo_price = models.IntegerField()
+    featured = models.IntegerField()
     price = models.IntegerField()
     max_recipients = models.IntegerField()
     payment_options = models.CharField(
         max_length=20, choices=PaymentOption.choices, default=PaymentOption.EFTCard)
     status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.AVAILABLE)
+        max_length=255)
 
     def __str__(self):
         return self.name

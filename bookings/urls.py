@@ -1,12 +1,13 @@
 from django.urls import path
 from . import views
 
-urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="request"),
+urlpatterns = [path("request/<int:service_id>/", views.BookingRequestCreateView.as_view(), name="request"),
                path("list/", views.BookingRequestListView.as_view(), name="list"),
                path("view/<int:appointment_id>/",
                     views.BookingRequestDetailView.as_view(), name="view"),
                path("view/",
-                    views.BookingRequestListAdmindasboard.as_view(), name="view-latest"),
+                    views.RequestListAdmindasboard.as_view(), name="view-latest"),
+               path("schedule/", views.ScheduledBookings.as_view(), name='schedule'),
                path("update-reply/<int:appointment_id>/",
                     views.BookingRequestReplyView.as_view(), name="reply"),
                path("cancel/<int:appointment_id>/",
@@ -21,9 +22,11 @@ urlpatterns = [path("request/", views.BookingRequestCreateView.as_view(), name="
                     name="booked-slots"),
                path("location/", views.AppLocationCreateView.as_view(),
                     name="location"),
-               path("cart/<int:service_id>/",
-                    views.CartRequestsStore.as_view(), name="cart-item"),
+               path("address/<int:user_id>/",
+                    views.UserLocationView.as_view(), name='address'),
                path("requests-per-month/", views.RequestStats.as_view(),
                     name='requets-per-month'),
                path("income-for-month/", views.IncomeMonth.as_view(), name='income'),
-               path("completed-requests/", views.CompleteRequests.as_view(), name='requets-completed'), ]
+               path("completed-requests/", views.CompleteRequests.as_view(),
+                    name='requets-completed'),
+               path("new-requests/", views.NewRequests().as_view(), name='new-requests'), ]

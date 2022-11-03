@@ -53,7 +53,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=3),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -65,12 +65,9 @@ DJOSER = {
     "USER_CREATE_PASSWORD_RETYPE": True,
     "USERNAME_CHANGED_EMAIL_CONFIRMATION": True,
     "PASSWORD_CHANGED_EMAIL_CONFIRMATION": True,
-    "SEND_ACTIVATION_EMAIL": True,
-    "SEND_CONFIRMATION_EMAIL": True,
     "SET_PASSWORD_RETYPE": True,
     "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}",
     "USERNAME_RESET_CONFIRM_URL": "username/reset/confirm/{uid}/{token}",
-    "ACTIVATION_URL": "accounts/activate/{uid}/{token}",
     "SERIALIZERS": {
         "user_create": "accounts.serializers.UserCreateSerializer",
         "user": "accounts.serializers.UserCreateSerializer",
@@ -78,13 +75,6 @@ DJOSER = {
     }, }
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "psnwaynehartley@gmail.com"
-EMAIL_HOST_PASSWORD = "ilvsunvxynuiqpee"
-EMAIL_USE_TLS = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -124,14 +114,19 @@ WSGI_APPLICATION = 'beautyandwellness.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jeansmobile',
+        'USER': 'root',
+        'PASSWORD': '00712',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
-
-
+###
+#
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -150,7 +145,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-GOOGLE_API_KEY = 'AIzaSyCDCAyEws4JU18RY48LVKmKGHttyHh_7R4'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/

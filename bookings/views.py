@@ -16,50 +16,26 @@ from .send_mail import send_mail_reply, send_mail_request
 from django.contrib.auth import get_user_model
 from .function import attempt_json_deserialize
 User = get_user_model()
-jeans_email = "psnwaynehartley@gmail.com"
-# Create your views here.
-
-
-class CartRequestsStore(generics.GenericAPIView):
-    serializer_class = serializers.CartBookingStore
-    permission_classes = []
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request: Request, service_id):
-        data = request.data
-        service = get_object_or_404(Service, pk=service_id)
-        serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.validated_data["service_id"] = service
-            serializer.save()
-
-            return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-        return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+jeans_email = "psnwaynehartley@gmail.com"  # placeholder for real email
 
 
 class BookingRequestCreateView(generics.GenericAPIView):
     serializer_class = serializers.BookingSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request):
+    def post(self, request: Request, service_id):
         data = request.data
         user = request.user
         name = user.username
         location = AppLocation.objects.get(user=user)
-
-        booking_data = data.get("booking")
-
-        booking_data = attempt_json_deserialize(
-            booking_data, expect_type=list)
+        service = Service.objects.get(pk=service_id)
 
         deserializedData = self.serializer_class(data=data)
 
         if deserializedData.is_valid():
-            deserializedData._validated_data["booking"] = booking_data
             deserializedData._validated_data["user"] = user
             deserializedData._validated_data["location"] = location
+            deserializedData._validated_data["service"] = service
             deserializedData.save(user=user)
             send_mail_request(text=name,
                               subject='Beauty and Wellness Service Appointment', to_emails=[jeans_email, ])
@@ -71,7 +47,7 @@ class BookingRequestCreateView(generics.GenericAPIView):
 
 class BookingRequestListView(generics.GenericAPIView):
     serializer_class = serializers.BookingDetailsSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminUser]
 
     def get(self, request: Request):
         appointments = Appointment.objects.all()
@@ -81,7 +57,7 @@ class BookingRequestListView(generics.GenericAPIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
-class BookingRequestListAdmindasboard(generics.GenericAPIView):
+class RequestListAdmindasboard(generics.GenericAPIView):
     serializer_class = serializers.BookingDetailsSerializer
     permission_classes = [IsAdminUser]
 
@@ -365,6 +341,21 @@ class AppLocationCreateView(generics.GenericAPIView):
         return Response(data=serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
+class UserLocationView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.LocationViewSerializer
+
+    def get(self, request: Request, user_id):
+
+        user = User.objects.get(pk=user_id)
+        location = AppLocation.objects.get(user=user)
+
+        serializer = self.serializer_class(instance=location)
+        response = [serializer.data]
+
+        return Response(data=response, status=status.HTTP_200_OK)
+
+
 class RequestStats(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
 
@@ -380,6 +371,11 @@ class RequestStats(generics.GenericAPIView):
             month = convert_to_month_one.month
             stat["month"] = month
 
+        for stat in stats:
+            if not stat["total"]:
+                stat["total"] = 0
+
+            return Response(data=stats, status=status.HTTP_200_OK)
         return Response(data=stats, status=status.HTTP_200_OK)
 
 
@@ -399,11 +395,10 @@ class IncomeMonth(generics.GenericAPIView):
         pytz.utc.localize(
             last_month_date)
 
-        # set to pending now due to testing
         income = Appointment.objects.exclude(
             created_at__gte=datetime.today()).filter(
             created_at__gte=date, appt_status='scheduled').aggregate(Sum('total_price'))
-        # set to accept for now due to testing
+
         income_last = Appointment.objects.exclude(
             created_at__gte=date).filter(
             created_at__gte=last_month_date, appt_status='scheduled').aggregate(Sum('total_price'))
@@ -443,3 +438,36 @@ class CompleteRequests(generics.GenericAPIView):
         dict = {"new": this_month, "old": last_month}
 
         return Response(data=dict, status=status.HTTP_200_OK)
+
+
+class ScheduledBookings(generics.GenericAPIView):
+    serializer_class = serializers.BookingDetailsSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+
+        date = datetime.today().date()
+        time = datetime.today().time()
+
+        appointments = Appointment.objects.all().filter(
+            start_date__gte=date, start_time__gte=time, appt_status='scheduled')
+
+        serializer = self.serializer_class(instance=appointments, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class NewRequests(generics.GenericAPIView):
+    serializer_class = serializers.BookingDetailsSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request):
+        date = datetime.today().date()
+        time = datetime.today().time()
+
+        appointments = Appointment.objects.all().filter(
+            start_date__gte=date, start_time__gte=time, appt_status='pending')
+
+        serializer = self.serializer_class(instance=appointments, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

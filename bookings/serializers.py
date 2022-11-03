@@ -4,7 +4,7 @@ import pytz
 from datetime import datetime, timedelta
 from email.policy import default
 from rest_framework import serializers
-from .models import Appointment, BookedSlot, AppLocation, Booking
+from .models import Appointment, BookedSlot, AppLocation
 from services.models import Service
 from django.contrib.auth import get_user_model
 from rest_framework.validators import ValidationError
@@ -24,48 +24,9 @@ class ViewLocationSerializer(serializers.ModelSerializer):
         fields = ['street', 'city', 'surburb', 'zip_code', 'country']
 
 
-class CartBookingStore(serializers.ModelSerializer):
-    service_id = serializers.ReadOnlyField(
-        source='service_id.id')
-    recipients = serializers.IntegerField(required=True)
-    amount = serializers.IntegerField(required=True)
-
-    class Meta:
-        model = Booking
-        fields = ["id", "service_id", "recipients", "amount"]
-
-    def validate(self, attrs):
-
-        recipients = attrs["recipients"]
-
-        if recipients > 10:
-            raise ValidationError("recipients exceeds 10 people")
-
-        return super().validate(attrs)
-
-    def create(self, validated_data):
-
-        cart = super().create(validated_data)
-
-        cart.save()
-
-        return cart
-
-
-class DisplayBooking(serializers.ModelSerializer):
-    service_id = serializers.ReadOnlyField(
-        source='service_id.name')
-    recipients = serializers.IntegerField(required=True)
-    amount = serializers.IntegerField()
-
-    class Meta:
-        model = Booking
-        fields = ["id", "service_id", "recipients", "amount"]
-
-
 class BookingSerializer(serializers.ModelSerializer):
-    booking = DisplayBooking(many=True, read_only=True)
     start_date = serializers.DateField(required=True)
+    recipients = serializers.IntegerField()
     start_time = serializers.TimeField(required=True)
     end_time = serializers.TimeField(required=True)
     appt_status = serializers.CharField(read_only=True, default='pending')
@@ -74,15 +35,13 @@ class BookingSerializer(serializers.ModelSerializer):
                                            default=serializers.CreateOnlyDefault(datetime.now()))
     updated_at = serializers.DateTimeField(
         read_only=True, default=datetime.now())
-    paid = serializers.BooleanField(read_only=True)
     total_price = serializers.IntegerField(),
-    payment_status = serializers.CharField(read_only=True, default='UNPAID')
-    payment_method = serializers.CharField(default='EFT/Card')
+    payment_method = serializers.CharField(default='Cash')
 
     class Meta:
         model = Appointment
-        fields = ["booking", "start_date", "start_time", "end_time",
-                  "appt_status", "approved", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method"]
+        fields = ["start_date", "start_time", "end_time", "recipients",
+                  "appt_status", "approved", "created_at", "updated_at", "total_price", "payment_method"]
 
     def _user(self, obj):
         request = self.context.get('request', None)
@@ -96,7 +55,7 @@ class BookingSerializer(serializers.ModelSerializer):
         start_time = datetime.combine(sdate, start_time)
         end_time = datetime.combine(sdate, end_time)
         # Add 30 min for break in between appointments
-        end_time = end_time + timedelta(minutes=30)
+        #end_time = end_time + timedelta(minutes=30)
         # The hours an appoitment should not exceed
         over_time = start_time + timedelta(hours=5)
 
@@ -107,9 +66,6 @@ class BookingSerializer(serializers.ModelSerializer):
 
         if startDate_passed:
             raise ValidationError("booking date/time has passed")
-
-        elif end_time < start_time or end_time > over_time:
-            raise ValidationError("appointment duration is too long")
 
         booked_appts = BookedSlot.objects.filter(appt_date=sdate)
         if booked_appts.exists():
@@ -137,8 +93,10 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class BookingDetailsSerializer(serializers.ModelSerializer):
-    booking = DisplayBooking(many=True, read_only=True)
+    service = serializers.ReadOnlyField(
+        source='service_id.name')
     user = serializers.ReadOnlyField(source='user.username')
+    recipients = serializers.IntegerField()
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
     end_time = serializers.TimeField()
@@ -146,29 +104,23 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
     appt_status = serializers.CharField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
-    paid = serializers.BooleanField()
     total_price = serializers.IntegerField()
-    payment_status = serializers.CharField()
     payment_method = serializers.CharField()
     location = ViewLocationSerializer(read_only=True)
 
     class Meta:
         model = Appointment
-        fields = ["id", "booking", "user", "start_date", "start_time", "end_time", "approved",
-                  "appt_status", "created_at", "updated_at", "paid", "total_price", "payment_status", "payment_method", "location"]
+        fields = ["id", "user", "start_date", "start_time", "end_time", "approved", "recipients",
+                  "appt_status", "created_at", "updated_at", "total_price", "payment_method", "location"]
 
 
 class BookingUpdateStatusSerializer(serializers.ModelSerializer):
     appt_status = serializers.CharField()
     approved = serializers.BooleanField(read_only=True)
-    payment_status = serializers.CharField(read_only=True)
-    payment_method = serializers.CharField(read_only=True)
-    paid = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Appointment
-        fields = ["appt_status", "approved",
-                  "payment_method", "paid", "payment_status"]
+        fields = ["appt_status", "approved", ]
 
 
 class BookingReschedule(serializers.ModelSerializer):
@@ -205,6 +157,17 @@ class LocationSerializer(serializers.ModelSerializer):
     surburb = serializers.CharField()
     city = serializers.CharField(required=True)
     zip_code = serializers.CharField(required=True)
+
+    class Meta:
+        model = AppLocation
+        fields = ['street', 'city', 'surburb', 'zip_code']
+
+
+class LocationViewSerializer(serializers.ModelSerializer):
+    street = serializers.CharField()
+    surburb = serializers.CharField()
+    city = serializers.CharField()
+    zip_code = serializers.CharField()
 
     class Meta:
         model = AppLocation

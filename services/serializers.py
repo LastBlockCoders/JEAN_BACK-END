@@ -8,14 +8,15 @@ from rest_framework.validators import ValidationError
 
 class CreateServiceSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=100, required=True)
-    category_id = serializers.CharField()
-    type = serializers.CharField()
+    category_id = serializers.CharField(required=True)
     description = serializers.CharField(required=True)
     location_requirements = serializers.CharField()
     image1 = serializers.ImageField(required=False)
     image2 = serializers.ImageField(required=False)
     image3 = serializers.ImageField(required=False)
     duration = serializers.DurationField(required=True)
+    promo_price = serializers.IntegerField()
+    featured = serializers.IntegerField()
     price = serializers.IntegerField(required=True)
     max_recipients = serializers.IntegerField()
     payment_options = serializers.CharField()
@@ -23,7 +24,7 @@ class CreateServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'category_id', 'type', 'description', 'location_requirements', 'image1',
+        fields = ['id', 'name', 'category_id', 'type', 'description', 'location_requirements', 'image1', 'promo_price', 'featured',
                   'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
     def validate(self, attrs):
@@ -74,6 +75,8 @@ class ViewServicesSerializer(serializers.ModelSerializer):
     image2 = serializers.ImageField()
     image3 = serializers.ImageField()
     duration = serializers.DurationField()
+    promo_price = serializers.IntegerField()
+    featured = serializers.IntegerField()
     price = serializers.IntegerField()
     max_recipients = serializers.IntegerField()
     payment_options = serializers.CharField(read_only=True)
@@ -81,34 +84,41 @@ class ViewServicesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'type', 'category', 'description', 'location_requirements',
+        fields = ['id', 'name', 'type', 'category', 'description', 'location_requirements', ' promo_price', 'featured',
                   'image1', 'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
 
 class ServicesPriceUpdateSerializers(serializers.ModelSerializer):
-    price = serializers.IntegerField()
+    price = serializers.IntegerField(required=True)
+    image1 = serializers.ImageField(required=False)
+    image2 = serializers.ImageField(required=False)
+    image3 = serializers.ImageField(required=False)
+    status = serializers.CharField(required=True)
 
     class Meta:
         model = Service
-        fields = ['price']
+        fields = ['price', 'status',
+                  'image1', 'image2', 'image3']
 
 
 class CategoryListViewSerializers(serializers.ModelSerializer):
     name = serializers.CharField()
+    image = serializers.ImageField()
     description = serializers.CharField()
 
     class Meta:
         model = Service_Category
-        fields = ["id", "name", "description"]
+        fields = ["id", "name", "image", "description"]
 
 
 class CategoryCreate(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
+    image = serializers.ImageField(required=True)
     description = serializers.CharField(required=True)
 
     class Meta:
         model = Service_Category
-        fields = ["name", "description"]
+        fields = ["name", "description", "image"]
 
 
 class ReceiveServiceID(serializers.ModelSerializer):

@@ -1,11 +1,17 @@
-
+import pytz
+import operator as op
+from datetime import datetime
+from django.db.models import Count, DateField, Sum
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.permissions import IsAdminUser
 from rest_framework import generics
+
+import services
 from .models import Service, Service_Category
+from bookings.models import Appointment
 from services import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -13,20 +19,26 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class CreateServicesView(generics.GenericAPIView):
-    serializer_class = serializers.CreateServiceSerializer
+    serializer_classes = [
+        serializers.CreateServiceSerializer, serializers.ViewServicesSerializer]
     permission_classes = [IsAdminUser]
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request: Request):
         data = request.data
-        deserializer = self.serializer_class(data=data)
+        deserializer = self.serializer_classes[0](data=data)
 
         if deserializer.is_valid():
             deserializer.save()
 
+            services = get_list_or_404(Service.objects.all())
+
+            serializer = self.serializer_classes[1](
+                instance=services, many=True)
+
             response = {
                 "message": "Service added successfully.",
-                "data": deserializer.data,
+                "data": serializer.data,
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
 
@@ -49,7 +61,7 @@ class ServiceDetailsView(generics.GenericAPIView):
 
 class ServiceDetailsUpdateView(generics.GenericAPIView):
     permission_classes = [IsAdminUser]
-    serializer_class = serializers.ViewServicesSerializer
+    serializer_class = serializers.ServicesPriceUpdateSerializers
     parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request: Request, service_id):
@@ -69,10 +81,12 @@ class ServiceDetailsUpdateView(generics.GenericAPIView):
 class ServiceListView(generics.GenericAPIView):
     serializer_class = serializers.ViewServicesSerializer
     permission_classes = []
-    parser_classes = (MultiPartParser, FormParser)
+    queryset = Service.objects.all()
 
     def get(self, request: Request):
         services = get_list_or_404(Service.objects.all())
+        queryset = Service.objects.all()
+        services = queryset
 
         serializer = self.serializer_class(instance=services, many=True)
 
@@ -119,3 +133,58 @@ class DeleteServiceView(generics.GenericAPIView):
         service.delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+class ServiceRequestPerMonth(generics.GenericAPIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request: Request, service_id):
+        service = Service.objects.get(pk=service_id)
+        date = datetime.today().date()
+        year = date.year
+        this_month = date.month
+        last_month = this_month - 1
+
+        date = datetime(int(year), int(this_month), 1)
+        pytz.utc.localize(
+            date)
+        last_month_date = datetime(int(year), int(last_month), 1)
+        pytz.utc.localize(
+            last_month_date)
+
+        appts_this_month = Appointment.objects.exclude(
+            created_at__gte=datetime.today()).filter(
+            created_at__gte=date).values_list('booking', flat=True)
+        this_month = appts_this_month
+
+        appts_last_month = Appointment.objects.exclude(
+            created_at__gte=date).filter(
+            created_at__gte=last_month_date).values_list('booking', flat=True)
+        last_month = appts_last_month
+
+        if this_month.exists() and last_month.exists():
+            new = op.countOf(this_month, service_id)
+            last = op.countOf(last_month, service_id)
+
+            dict = [{"id": int(date.month), "total": new}, {
+                "id": int(last_month_date.month), "total": last}]
+
+            return Response(data=dict, status=status.HTTP_200_OK)
+
+        if not this_month and last_month.exists():
+            new = 0
+            last = op.countOf(last_month, service_id)
+
+            dict = [{"id": int(date.month), "total": new}, {
+                "id": int(last_month_date.month), "total": last}]
+
+            return Response(data=dict, status=status.HTTP_200_OK)
+
+        if not last_month and this_month.exists():
+            new = op.countOf(this_month, service_id)
+            last = 0
+
+            dict = [{"id": int(date.month), "total": new}, {
+                "id": int(last_month_date.month), "total": last}]
+
+            return Response(data=dict, status=status.HTTP_200_OK)

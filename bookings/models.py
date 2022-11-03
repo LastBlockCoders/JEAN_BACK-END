@@ -21,17 +21,13 @@ class AppLocation(models.Model):
     latitude = models.CharField(max_length=255,  null=True, blank=True)
 
 
-class Booking(models.Model):
-    service_id = models.ForeignKey(Service, on_delete=models.CASCADE)
-    recipients = models.IntegerField()
-    amount = models.IntegerField()
-
-
 class Appointment(models.Model):
     APPT_STATUS = (('PENDING', 'pending'), ('SCHEDULE',
-                                            'scheduled'), ('DECLINE', 'declined'), ('CANCELLED', 'cancelled'), ('ACCEPT', 'accepted'))
+                                            'scheduled'), ('DECLINE', 'declined'), ('CANCELLED', 'cancelled'),
+                   ('COMPLETED', 'completed'), ('MISSED', 'missed'))
     user = models.ForeignKey(User, on_delete=models.PROTECT)
-    booking = models.ManyToManyField(Booking)
+    service = models.ForeignKey(Service, on_delete=models.PROTECT)
+    recipients = models.IntegerField()
     start_date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
@@ -40,10 +36,8 @@ class Appointment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     approved = models.BooleanField(default=False)
-    paid = models.BooleanField(default=False)
     total_price = models.IntegerField()
-    payment_status = models.CharField(max_length=8, default='UNPAID')
-    payment_method = models.CharField(max_length=25, default='EFT-Card')
+    payment_method = models.CharField(max_length=25, default='Cash')
     location = models.ForeignKey(AppLocation, on_delete=models.PROTECT)
 
     class Meta:
