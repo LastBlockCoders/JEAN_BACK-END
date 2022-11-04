@@ -4,6 +4,7 @@ from unicodedata import category
 from rest_framework import serializers
 from .models import Service, Service_Category
 from rest_framework.validators import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class CreateServiceSerializer(serializers.ModelSerializer):
@@ -15,8 +16,6 @@ class CreateServiceSerializer(serializers.ModelSerializer):
     image2 = serializers.ImageField(required=False)
     image3 = serializers.ImageField(required=False)
     duration = serializers.DurationField(required=True)
-    promo_price = serializers.IntegerField()
-    featured = serializers.IntegerField()
     price = serializers.IntegerField(required=True)
     max_recipients = serializers.IntegerField()
     payment_options = serializers.CharField()
@@ -24,7 +23,7 @@ class CreateServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'category_id', 'type', 'description', 'location_requirements', 'image1', 'promo_price', 'featured',
+        fields = ['id', 'name', 'category_id', 'type', 'description', 'location_requirements', 'image1',
                   'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
     def validate(self, attrs):
