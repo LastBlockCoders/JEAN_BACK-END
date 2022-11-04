@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     "promotions",
     "rest_framework",
     "rest_framework.authtoken",
+    'django_filters',
+
     # app-based apps
     "djoser",
     "phonenumbers",
@@ -49,6 +51,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    'DEFAULT_FILTER_BACKENDS':
+        'django_filters.rest_framework.DjangoFilterBackend',
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated"),
 }
 
@@ -117,12 +121,9 @@ WSGI_APPLICATION = 'beautyandwellness.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'jeansmobile',
-        'USER': 'root',
-        'PASSWORD': '00712',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'sqlite3.db',
     }
 }
 ###
@@ -173,4 +174,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]

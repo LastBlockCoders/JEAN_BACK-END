@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.permissions import IsAdminUser
 from rest_framework import generics
+from django_filters.rest_framework import DjangoFilterBackend
+import random
 
 import services
 from .models import Service, Service_Category
@@ -19,22 +21,18 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class CreateServicesView(generics.GenericAPIView):
-    serializer_classes = [
-        serializers.CreateServiceSerializer, serializers.ViewServicesSerializer]
+    serializer_class = serializers.CreateServiceSerializer
     permission_classes = [IsAdminUser]
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request: Request):
         data = request.data
-        deserializer = self.serializer_classes[0](data=data)
+        deserializer = self.serializer_class(data=data)
 
         if deserializer.is_valid():
             deserializer.save()
-
-            services = get_list_or_404(Service.objects.all())
-
-            serializer = self.serializer_classes[1](
-                instance=services, many=True)
+            serializer = self.serializer_class(
+                instance=services)
 
             response = {
                 "message": "Service added successfully.",
@@ -100,7 +98,8 @@ class CategoryListView(generics.GenericAPIView):
     def get(self, request: Request):
         category = get_list_or_404(Service_Category.objects.all())
 
-        serializer = self.serializer_class(instance=category, many=True)
+        serializer = self.serializer_class(instance=category, context={"request":
+                                                                       request}, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
@@ -196,8 +195,35 @@ class FeatureService(generics.GenericAPIView):
 
     def get(self, request: Request):
 
-        queryset = Service.objects.filter(featured=1)
+        queryset = list(Service.objects.filter(featured=1))
 
-        serializer = self.serializer_class(instance=queryset, many=True)
+        services = random.sample(queryset, 3)
+
+        serializer = self.serializer_class(instance=services, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class Feature4service(generics.GenericAPIView):
+    serializer_class = serializers.ViewServicesSerializer
+    permission_classes = []
+
+    def get(self, request: Request):
+
+        queryset = list(Service.objects.filter())
+
+        services = random.sample(queryset, 4)
+
+        serializer = self.serializer_class(instance=services, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+class SearchList(generics.GenericAPIView):
+    queryset = Service.objects.all()
+    serializer_class = serializers.ViewServicesSerializer
+    name = 'serviceList'
+    filter_fields = (
+        'name',
+        'description',
+    )

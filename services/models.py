@@ -11,7 +11,7 @@ def upload_to(instance, filename):
 
 class Service_Category(models.Model):
     name = models.CharField(max_length=100)
-    image1 = models.ImageField(upload_to=upload_to, blank=True, null=True)
+    image = models.ImageField(upload_to=upload_to, blank=True, null=True)
     description = models.TextField()
 
     def __str__(self):
@@ -32,6 +32,7 @@ class Service(models.Model):
 
     category = models.ForeignKey(
         Service_Category, related_name="services", on_delete=models.CASCADE)
+    # remove type and add onSale bolean varibles
     type = models.CharField(
         max_length=10, choices=ServiceType.choices, default=ServiceType.WELLNESS
     )

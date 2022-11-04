@@ -14,5 +14,7 @@ urlpatterns = [path("create/", views.CreateServicesView.as_view(), name="create"
                path("all/", views.ServiceListView.as_view(), name="all-services"),
                path("update/<int:service_id>/",
                     views.ServiceDetailsUpdateView.as_view(), name="service-update"),
+               path("featured/", views.FeatureService.as_view(), name="featured"),
+               path("random/", views.Feature4service.as_view(), name="random-4"),
                path("category/", views.CategoryListView.as_view(), name="category"),
                path("category/create/", views.CreateCategoryView.as_view(), name="create-category")] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

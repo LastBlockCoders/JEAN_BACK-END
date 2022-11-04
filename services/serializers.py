@@ -71,9 +71,9 @@ class ViewServicesSerializer(serializers.ModelSerializer):
     description = serializers.CharField()
     category = serializers.ReadOnlyField(source='category.name')
     location_requirements = serializers.CharField()
-    image1 = serializers.ImageField()
-    image2 = serializers.ImageField()
-    image3 = serializers.ImageField()
+    image1 = serializers.ImageField(use_url=True)
+    image2 = serializers.ImageField(use_url=True)
+    image3 = serializers.ImageField(use_url=True)
     duration = serializers.DurationField()
     promo_price = serializers.IntegerField()
     featured = serializers.IntegerField()
@@ -84,7 +84,7 @@ class ViewServicesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'type', 'category', 'description', 'location_requirements', ' promo_price', 'featured',
+        fields = ['id', 'name', 'type', 'category', 'description', 'location_requirements', 'promo_price', 'featured',
                   'image1', 'image2', 'image3', 'duration', 'price', 'max_recipients', 'payment_options', 'status']
 
 
@@ -103,12 +103,17 @@ class ServicesPriceUpdateSerializers(serializers.ModelSerializer):
 
 class CategoryListViewSerializers(serializers.ModelSerializer):
     name = serializers.CharField()
-    image = serializers.ImageField()
+    image = serializers.ImageField(use_url=True)
     description = serializers.CharField()
 
     class Meta:
         model = Service_Category
         fields = ["id", "name", "image", "description"]
+
+    def get_photo_url(self, obj):
+        request = self.context.get('request')
+        photo_url = obj.fingerprint.url
+        return request.build_absolute_uri(photo_url)
 
 
 class CategoryCreate(serializers.ModelSerializer):
