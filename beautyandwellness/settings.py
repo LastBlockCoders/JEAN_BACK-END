@@ -121,9 +121,12 @@ WSGI_APPLICATION = 'beautyandwellness.wsgi.application'
 
 DATABASES = {
     'default': {
-        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'sqlite3.db',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jeansmobile',
+        'USER': 'root',
+        'PASSWORD': '00712',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 ###

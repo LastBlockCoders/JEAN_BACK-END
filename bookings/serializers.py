@@ -110,7 +110,7 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ["id", "user", "start_date", "start_time", "end_time", "approved", "recipients",
+        fields = ["id", "service", "user", "start_date", "start_time", "end_time", "approved", "recipients",
                   "appt_status", "created_at", "updated_at", "total_price", "payment_method", "location"]
 
 

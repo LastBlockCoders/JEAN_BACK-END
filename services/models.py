@@ -1,6 +1,7 @@
 from email.policy import default
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -39,11 +40,12 @@ class Service(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     location_requirements = models.TextField(null=True)
-    image1 = models.ImageField(upload_to=upload_to, blank=True, null=True)
+    image1 = models.ImageField(
+        _("Image"), upload_to=upload_to, blank=True, null=True)
     image2 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     image3 = models.ImageField(upload_to=upload_to, blank=True, null=True)
     duration = models.DurationField()
-    promo_price = models.IntegerField()
+    promo_price = models.IntegerField(default=0)
     featured = models.IntegerField(default=0)
     price = models.IntegerField()
     max_recipients = models.IntegerField()

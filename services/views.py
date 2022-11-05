@@ -210,7 +210,7 @@ class Feature4service(generics.GenericAPIView):
 
     def get(self, request: Request):
 
-        queryset = list(Service.objects.filter())
+        queryset = list(Service.objects.all())
 
         services = random.sample(queryset, 4)
 
@@ -227,3 +227,18 @@ class SearchList(generics.GenericAPIView):
         'name',
         'description',
     )
+
+
+class GetByCategory(generics.GenericAPIView):
+    serializer_class = serializers.ViewServicesSerializer
+    permission_classes = []
+
+    def get(self, request: Request, category_id):
+
+        cat = Service_Category.objects.get(pk=category_id)
+
+        queryset = list(Service.objects.all().filter(category=cat))
+
+        serializer = self.serializer_class(instance=queryset, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
