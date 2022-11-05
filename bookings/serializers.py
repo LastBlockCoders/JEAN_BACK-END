@@ -99,7 +99,7 @@ class BookingDetailsSerializer(serializers.ModelSerializer):
     recipients = serializers.IntegerField()
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
-    end_time = serializers.TimeField()
+    end_time = serializers.TimeField(read_only=True)
     approved = serializers.BooleanField()
     appt_status = serializers.CharField()
     created_at = serializers.DateTimeField()

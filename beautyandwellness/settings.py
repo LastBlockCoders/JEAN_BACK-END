@@ -120,13 +120,10 @@ WSGI_APPLICATION = 'beautyandwellness.wsgi.application'
 
 
 DATABASES = {
+
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'jeansmobile',
-        'USER': 'root',
-        'PASSWORD': '00712',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
     }
 }
 ###
